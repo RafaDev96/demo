@@ -1,45 +1,34 @@
 package com.example.demo.service
 
+import com.example.demo.controller.payloads.ItemPayload
+import groovy.transform.CompileStatic
+import org.apache.coyote.BadRequestException
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
-import java.util.ArrayList
 
+@CompileStatic
 @Service
 class ItemService {
 
-    private final ConcurrentHashMap<Integer, String> items = new ConcurrentHashMap<>()
+    private final ConcurrentHashMap<Integer, ItemPayload> items = new ConcurrentHashMap<>()
     private Integer nextId = 1
 
     ItemService() {
-        items.put(nextId++, "Maça")
-        items.put(nextId++, "Banana")
+        items.put(nextId++, new ItemPayload("Maça"))
+        items.put(nextId++, new ItemPayload("Banana"))
     }
 
-    List<String> getAllItems() {
+    List<ItemPayload> getAllItems() {
         return new ArrayList<>(items.values())
     }
 
-    String getItem(Integer id) {
+    ItemPayload getItem(Integer id) {
         return items.get(id)
     }
 
-    Integer createItem(String newItem) {
-        // 1. Aqui, você insere a LÓGICA DE NEGÓCIO.
-        // Primeiro, vamos checar se o número de itens é maior ou igual a 5.
-        if (items.size() >= 5) {
-            // 2. Se a regra de negócio for violada, o método deve parar a execução e
-            // indicar que algo deu errado.
-            // Neste caso, vamos retornar 'null' para sinalizar um erro.
-            // O método "createItem" não deve saber o que acontece depois disso,
-            // apenas que não foi possível criar o item.
-            return null
-        }
-
-        // 3. Se a regra de negócio for atendida (ou seja, o 'if' acima não foi ativado),
-        // a execução do código continua normalmente.
-        // As outras validações e a lógica de criação do item vêm aqui.
-        if (!isNameValid(newItem)) {
-            return null
+    Integer createItem(ItemPayload newItem) {
+        if (!newItem.isNameValid()) {
+            throw new BadRequestException("Nome Inválido.")
         }
 
         Integer newId = nextId++
@@ -47,8 +36,8 @@ class ItemService {
         return newId
     }
 
-    boolean updateItem(Integer id, String updatedItem) {
-        if (!isNameValid(updatedItem)) {
+    boolean updateItem(Integer id, ItemPayload updatedItem) {
+        if (!updatedItem.isNameValid()) {
             return false
         }
         if (items.containsKey(id)) {
@@ -64,17 +53,5 @@ class ItemService {
             return true
         }
         return false
-    }
-
-    private boolean isNameValid(String name) {
-        // A lógica da sua nova regra está aqui.
-        boolean valid = name != null && name.trim().length() > 2
-
-        if (valid) {
-            if (name.equalsIgnoreCase("Caju")) {
-                valid = false
-            }
-        }
-        return valid
     }
 }
